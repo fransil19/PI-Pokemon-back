@@ -45,7 +45,7 @@ const getPokemonByID = async (poke_id) => {
     let poke;
 
     if(isNaN(poke_id)){
-        poke = Pokemon.findOne({
+        poke = await Pokemon.findOne({
             where: {
                 id: poke_id
             },
@@ -102,7 +102,7 @@ const createPokemon = async (name, height, weight, speed, life, attack, defense,
 
     const createdPoke = await Pokemon.create(poke)
     await createdPoke.setTipos(types)
-    const returnedPoke = Pokemon.findOne({
+    const returnedPoke = await Pokemon.findOne({
         where: {
             id: id
         },
@@ -111,8 +111,55 @@ const createPokemon = async (name, height, weight, speed, life, attack, defense,
     return returnedPoke
 }
 
+const updatePokemon = async (id,name, height, weight, speed, life, attack, defense, types) => {
+
+  if (!name || name==="") throw Error('Debe proporcionar un nombre al pokemon')
+  const poke = await Pokemon.findOne({
+    where: {
+        id: id
+    },
+    include: Tipo
+  })
+
+  poke.set({
+    name,
+    height,
+    weight,
+    speed,
+    life,
+    attack,
+    defense,
+  })
+
+  await poke.setTipos(types)
+  await poke.save()
+
+  await poke.reload()
+  
+  return {message: "Pokemon updated succesfully.", pokemon: poke}
+}
+
+const deletePokemon = async (id) => {
+
+  if (!id) throw Error('Debe proporcionar un id de pokemon a eliminar')
+  const poke = await Pokemon.findOne({
+    where: {
+        id: id
+    },
+    include: Tipo
+  })
+
+
+  await poke.removeTipos()
+  await poke.destroy() 
+
+  return {message: "Pokemon deleted succesfully.", pokemon: poke}
+}
+
 module.exports = {
     getPokemon,
     getPokemonByID,
     createPokemon,
+    updatePokemon,
+    deletePokemon
 }
